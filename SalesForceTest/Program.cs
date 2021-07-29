@@ -6,33 +6,36 @@ namespace SalesForceTest
 {
     interface ISorter
     {
-       public void SorterMethod(List<string> dataToSort);
+        void SorterMethod(List<string> dataToSort);
+    }
+    interface IDataProcessor
+    {
+        void ProcessData(IDataProvider dataProvider, string path);
     }
     interface IDataProvider
     {
-        public void ReadData(string path);
+        void ReadDataMethod(string path);
+
     }
     interface IExecuter
     {
-        public void Execute(List<string> dataToExecute);
+        void Execute(List<string> dataToExecute);
     }
-
     class Choice
     {
         protected void ExeptionCatcher()
         {
             Console.WriteLine("Incorect data pasted,if you like to repeat type 'Yes'");
             string chooser = Console.ReadLine();
-            if (chooser != "yes") { return; }
+            if (chooser.ToLower() != "yes") { return; }
             ChooseMethod();
         }
-        public void ChooseMethod()
+        public string ChooseMethod()
         {
             // Create list to contain existing file paths and work with them
             List<string> indexForExistingFiles = new List<string>() { };
-            indexForExistingFiles.Add("Z:\\SalesForceTest\\SF\\source.txt");
-            indexForExistingFiles.Add("Z:\\SalesForceTest\\SF\\source1.txt");
-            IDataProvider rd = new Reader();
+            indexForExistingFiles.Add("Z:\\SF\\source.txt");
+            indexForExistingFiles.Add("Z:\\SF\\source1.txt");
             Console.WriteLine("If you want to see existing exampls of file type 'file',if you want to add new one type 'new' ");
             string deciderForFileType = Console.ReadLine();
             int chooserForExistingFiles;
@@ -51,22 +54,31 @@ namespace SalesForceTest
                 try
                 {
                     chooserForExistingFiles = Int32.Parse(Console.ReadLine());
-                    rd.ReadData(indexForExistingFiles[chooserForExistingFiles-1]);
+                    return indexForExistingFiles[chooserForExistingFiles - 1];
                 }
                 catch (Exception)
                 {
                     ExeptionCatcher();
                 }
-            } else if (deciderForFileType == "new")
+            }
+            else if (string.Equals(deciderForFileType, "new", StringComparison.InvariantCultureIgnoreCase))
             {
                 Console.WriteLine("Please type the way to the new file similar to this exampl 'C:\\SF\\source.txt'");
                 chooserForNewFiles = Console.ReadLine();
-                rd.ReadData(chooserForNewFiles);
+                return chooserForNewFiles;
             }
             else
             {
                 ExeptionCatcher();
             }
+            return deciderForFileType;
+        }
+    }
+    class ReadData : IDataProcessor
+    {
+        public void ProcessData(IDataProvider dataProvider, string path)
+        {
+            dataProvider.ReadDataMethod(path);
         }
     }
     class Reader : IDataProvider
@@ -74,7 +86,7 @@ namespace SalesForceTest
         protected List<string> txtData = new List<string>();
         ISorter sort = new Sorter();
         Choice choice = new Choice();
-        public void ReadData(string path)
+        public void ReadDataMethod(string path)
         {
             try
             {
@@ -83,7 +95,7 @@ namespace SalesForceTest
                     string line;
                     while ((line = sr.ReadLine()) != null)
                     {
-                        //Console.WriteLine(line);
+                        Console.WriteLine(line);
                         txtData.Add(line);
                     }
                     sort.SorterMethod(txtData);
@@ -95,18 +107,18 @@ namespace SalesForceTest
                 Console.WriteLine(e.Message);
                 Console.WriteLine("Sry incorect command please try again,Type yes if you want to try again.");
                 string chooseForRepeat = Console.ReadLine();
-                if (chooseForRepeat != "yes") { return; }
+                if (chooseForRepeat != "Yes") { return; }
                 choice.ChooseMethod();
             }
         }
     }
-    class Sorter:ISorter
+    class Sorter : ISorter
     {
         protected void ExeptionCatcher(List<string> txtData)
         {
             Console.WriteLine("Incorect data pasted,if you like to repeat type 'Yes'");
             string chooser = Console.ReadLine();
-            if (chooser != "yes") { return; }
+            if (chooser.ToLower() != "yes") { return; }
             SorterMethod(txtData);
         }
         public void SorterMethod(List<string> txtData)
@@ -132,13 +144,13 @@ namespace SalesForceTest
             }
             Console.WriteLine("Do you want to reverse numerics?Paste 'Yes'/'No'");
             string chooserForRevers = Console.ReadLine();
-            if (chooserForRevers == "yes")
+            if (chooserForRevers.ToLower() == "yes")
             {
                 FibonacciSortMethod(sortedDataFibonacci, lengthForFibonacci);
             }
-            else if (chooserForRevers == "no")
-            { 
-                FibonacciSortMethodWithoutNumerics(sortedDataFibonacci,lengthForFibonacci); 
+            else if (chooserForRevers.ToLower() == "no")
+            {
+                FibonacciSortMethodWithoutNumerics(sortedDataFibonacci, lengthForFibonacci);
             }
             else
             {
@@ -146,7 +158,7 @@ namespace SalesForceTest
             }
         }
         IExecuter execute = new Executer();
-        protected void FibonacciSortMethod(List<string>txtData,int lengthForFibonacci)
+        protected void FibonacciSortMethod(List<string> txtData, int lengthForFibonacci)
         {
             List<string> resultTxtData = new List<string>();
             foreach (var item in txtData)
@@ -163,14 +175,14 @@ namespace SalesForceTest
                 resultTxtData.Add(Reverser.ReverseWithoutNumbersRevers(item));
             }
             execute.Execute(resultTxtData);
-        }  
+        }
     }
     class Reverser
     {
         public static string Reverse(string stringInput)
         {
             char[] charArray = stringInput.ToCharArray();
-            string reverse=null;
+            string reverse = null;
             for (int i = charArray.Length - 1; i >= 0; i--)
             {
                 reverse += charArray[i];
@@ -214,7 +226,9 @@ namespace SalesForceTest
         static void Main(string[] args)
         {
             Choice chooser = new Choice();
-            chooser.ChooseMethod();
+            string path = chooser.ChooseMethod();
+            IDataProcessor dataProcessor = new ReadData();
+            dataProcessor.ProcessData(new Reader(), path);
             Console.ReadKey();
         }
     }
